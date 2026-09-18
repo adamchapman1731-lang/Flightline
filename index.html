@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Flightline</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green-950: #10241c;
+    --green-800: #1d4632;
+    --green-700: #235339;
+    --green-600: #2e6b4b;
+    --green-500: #3f8562;
+    --chalk-050: #f3f4ef;
+    --chalk-100: #e8e9e0;
+    --clay-500: #c23b3b;
+    --clay-600: #a83030;
+    --sand-300: #d8cba8;
+    --ink-900: #16201b;
+    --ink-600: #4b564e;
+
+    --bg: var(--chalk-050);
+    --bg-elevated: #ffffff;
+    --text: var(--ink-900);
+    --text-muted: var(--ink-600);
+    --border: rgba(22, 32, 27, 0.12);
+    --accent: var(--green-700);
+    --accent-text: #ffffff;
+    --danger: var(--clay-500);
+    --tab-bg: #ffffff;
+    --chip-bg: var(--chalk-100);
+    --chip-bg-active: var(--green-700);
+    --chip-text-active: #ffffff;
+    --sheet-bg: #ffffff;
+    --font-display: "Fraunces", Georgia, serif;
+    --font-body: "Work Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: var(--green-950);
+      --bg-elevated: #18302459;
+      --bg-elevated: #17291f;
+      --text: var(--chalk-050);
+      --text-muted: #9fb0a4;
+      --border: rgba(243, 244, 239, 0.14);
+      --accent: var(--green-500);
+      --accent-text: #0e1a14;
+      --tab-bg: #17291f;
+      --chip-bg: #20362a;
+      --chip-bg-active: var(--green-500);
+      --chip-text-active: #0e1a14;
+      --sheet-bg: #17291f;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: var(--green-950);
+    --bg-elevated: #17291f;
+    --text: var(--chalk-050);
+    --text-muted: #9fb0a4;
+    --border: rgba(243, 244, 239, 0.14);
+    --accent: var(--green-500);
+    --accent-text: #0e1a14;
+    --tab-bg: #17291f;
+    --chip-bg: #20362a;
+    --chip-bg-active: var(--green-500);
+    --chip-text-active: #0e1a14;
+    --sheet-bg: #17291f;
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    background: var(--bg); color: var(--text);
+    font-family: var(--font-body);
+  }
+  body {
+    display: flex; justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #app {
+    width: 100%; max-width: 480px;
+    min-height: 100vh; min-height: 100dvh;
+    display: flex; flex-direction: column;
+    position: relative;
+    overflow-x: hidden;
+  }
+  button { font-family: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  }
+
+  header.topbar {
+    padding: max(18px, env(safe-area-inset-top)) 20px 12px;
+    display: flex; align-items: baseline; justify-content: space-between;
+  }
+  header.topbar h1 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.6rem;
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+  header.topbar .subtitle {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  main {
+    flex: 1;
+    padding: 0 20px 100px;
+    overflow-y: auto;
+  }
+
+  /* Club chip selector */
+  .club-row {
+    display: flex; gap: 8px; overflow-x: auto;
+    padding: 4px 2px 16px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .club-row::-webkit-scrollbar { display: none; }
+  .chip {
+    flex: 0 0 auto;
+    padding: 9px 16px;
+    border-radius: 999px;
+    background: var(--chip-bg);
+    color: var(--text);
+    border: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .chip.active {
+    background: var(--chip-bg-active);
+    color: var(--chip-text-active);
+  }
+
+  /* Camera */
+  .camera-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    background: #0b1712;
+    border-radius: 18px;
+    overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .camera-wrap video { width: 100%; height: 100%; object-fit: cover; }
+  .camera-placeholder {
+    color: #cfd8d2; text-align: center; padding: 32px;
+    font-size: 0.95rem; line-height: 1.5;
+  }
+  .camera-placeholder button { margin-top: 14px; }
+  .rec-badge {
+    position: absolute; top: 14px; left: 14px;
+    background: rgba(0,0,0,0.55); color: #fff;
+    padding: 5px 10px; border-radius: 999px;
+    font-size: 0.78rem; display: flex; align-items: center; gap: 6px;
+  }
+  .rec-dot {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--clay-500);
+    animation: pulse 1s infinite;
+  }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+  .record-controls {
+    display: flex; justify-content: center; margin: 26px 0 10px;
+  }
+  .shutter {
+    width: 74px; height: 74px; border-radius: 50%;
+    border: 4px solid var(--text);
+    background: transparent;
+    position: relative;
+  }
+  .shutter::after {
+    content: ""; position: absolute; inset: 6px;
+    border-radius: 50%; background: var(--danger);
+    transition: border-radius 0.15s ease;
+  }
+  .shutter.recording::after { border-radius: 8px; inset: 20px; }
+
+  .hint { text-align: center; font-size: 0.82rem; color: var(--text-muted); margin-top: 4px; }
+
+  /* Bottom sheet */
+  .sheet-backdrop {
+    position: fixed; inset: 0; background: rgba(10,16,13,0.4);
+    display: none; z-index: 20;
+  }
+  .sheet-backdrop.open { display: block; }
+  .sheet {
+    position: fixed; left: 50%; bottom: 0; transform: translateX(-50%) translateY(100%);
+    width: 100%; max-width: 480px;
+    background: var(--sheet-bg);
+    border-radius: 20px 20px 0 0;
+    padding: 20px 20px max(20px, env(safe-area-inset-bottom));
+    z-index: 21;
+    transition: transform 0.25s ease;
+    max-height: 82vh; overflow-y: auto;
+  }
+  .sheet.open { transform: translateX(-50%) translateY(0); }
+  .sheet h2 { font-family: var(--font-display); font-weight: 600; margin: 0 0 4px; font-size: 1.3rem; }
+  .sheet video { width: 100%; border-radius: 12px; margin: 10px 0; background: #000; }
+  .field-label { font-size: 0.82rem; color: var(--text-muted); margin: 16px 0 8px; }
+  .shape-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+  .estimate-row { display: flex; align-items: center; gap: 10px; }
+  .estimate-row input[type="number"] {
+    flex: 1; padding: 12px 14px; border-radius: 12px;
+    border: 1px solid var(--border); background: var(--bg);
+    color: var(--text); font-size: 1rem; font-family: inherit;
+  }
+  .est-tag {
+    font-size: 0.72rem; color: var(--text-muted); border: 1px dashed var(--border);
+    padding: 3px 8px; border-radius: 999px;
+  }
+  .sheet-actions { display: flex; gap: 10px; margin-top: 22px; }
+
+  .btn {
+    padding: 13px 18px; border-radius: 12px; border: none;
+    font-weight: 600; font-size: 0.95rem; flex: 1;
+  }
+  .btn-primary { background: var(--accent); color: var(--accent-text); }
+  .btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--border); }
+  .btn-danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
+
+  /* Log */
+  .shot-card {
+    background: var(--bg-elevated); border: 1px solid var(--border);
+    border-radius: 14px; padding: 14px 16px; margin-bottom: 10px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .shot-card .flag {
+    font-family: var(--font-display); font-size: 1.4rem; font-weight: 600;
+    width: 40px; text-align: center;
+  }
+  .shot-card .meta { flex: 1; min-width: 0; }
+  .shot-card .club-name { font-weight: 600; font-size: 0.95rem; }
+  .shot-card .sub { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; }
+  .shot-card .carry { font-size: 0.85rem; text-align: right; }
+  .shot-card .carry .tag { display:block; font-size: 0.68rem; color: var(--text-muted); }
+  .shot-card .del {
+    background: none; border: none; color: var(--text-muted); font-size: 1.1rem;
+    padding: 4px 6px;
+  }
+  .empty-state {
+    text-align: center; color: var(--text-muted); padding: 60px 20px;
+    font-size: 0.95rem; line-height: 1.6;
+  }
+  .empty-state .big { font-size: 2rem; display: block; margin-bottom: 10px; }
+
+  section.card {
+    background: var(--bg-elevated); border: 1px solid var(--border);
+    border-radius: 14px; padding: 16px; margin-bottom: 14px;
+  }
+  section.card h3 { margin: 0 0 6px; font-size: 1rem; }
+  section.card p { margin: 0; font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; }
+  .row-between { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .seg { display: flex; background: var(--chip-bg); border-radius: 10px; padding: 3px; }
+  .seg button { border: none; background: transparent; padding: 7px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 500; color: var(--text); }
+  .seg button.active { background: var(--bg-elevated); }
+
+  /* Tab bar */
+  nav.tabbar {
+    position: fixed; left: 50%; bottom: 0; transform: translateX(-50%);
+    width: 100%; max-width: 480px;
+    background: var(--tab-bg); border-top: 1px solid var(--border);
+    display: flex; padding-bottom: env(safe-area-inset-bottom);
+    z-index: 10;
+  }
+  nav.tabbar button {
+    flex: 1; border: none; background: none; padding: 10px 0 8px;
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    color: var(--text-muted); font-size: 0.72rem; font-family: inherit;
+  }
+  nav.tabbar button.active { color: var(--accent); }
+  nav.tabbar svg { width: 22px; height: 22px; }
+
+  .toast {
+    position: fixed; left: 50%; bottom: 90px; transform: translateX(-50%) translateY(20px);
+    background: var(--ink-900); color: #fff; padding: 10px 18px; border-radius: 999px;
+    font-size: 0.85rem; opacity: 0; pointer-events: none; transition: all 0.2s ease;
+    z-index: 30; white-space: nowrap;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="topbar">
+    <div>
+      <h1 id="pageTitle">Range</h1>
+      <div class="subtitle" id="pageSubtitle">Phase 1 &middot; recording &amp; log</div>
+    </div>
+  </header>
+
+  <main id="main"></main>
+
+  <div class="sheet-backdrop" id="sheetBackdrop"></div>
+  <div class="sheet" id="sheet"></div>
+
+  <nav class="tabbar">
+    <button data-tab="range" class="active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 21V4l1-1 12 4-8 3v11"/></svg>
+      Range
+    </button>
+    <button data-tab="log">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+      Log
+    </button>
+    <button data-tab="settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.55-1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1z"/></svg>
+      Settings
+    </button>
+  </nav>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var CLUBS = ["Driver","3W","5W","3H","4i","5i","6i","7i","8i","9i","PW","GW","SW","LW","Putter"];
+  var SHAPES = [
+    {id:"straight", label:"Straight"},
+    {id:"draw", label:"Draw"},
+    {id:"fade", label:"Fade"},
+    {id:"hook", label:"Hook"},
+    {id:"slice", label:"Slice"},
+    {id:"push", label:"Push"},
+    {id:"pull", label:"Pull"}
+  ];
+
+  var state = {
+    tab: "range",
+    selectedClub: "7i",
+    selectedShape: "straight",
+    stream: null,
+    recorder: null,
+    chunks: [],
+    recording: false,
+    lastClipUrl: null,
+    unit: loadUnit()
+  };
+
+  // ---------- storage helpers ----------
+  function loadShots() {
+    try {
+      var raw = localStorage.getItem("flightline_shots");
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) { return []; }
+  }
+  function saveShots(shots) {
+    try { localStorage.setItem("flightline_shots", JSON.stringify(shots)); }
+    catch (e) { showToast("Couldn't save — storage may be full"); }
+  }
+  function loadUnit() {
+    try { return localStorage.getItem("flightline_unit") || "yds"; }
+    catch (e) { return "yds"; }
+  }
+  function saveUnit(u) {
+    try { localStorage.setItem("flightline_unit", u); } catch (e) {}
+  }
+
+  // ---------- toast ----------
+  var toastTimer;
+  function showToast(msg) {
+    var t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.classList.remove("show"); }, 2200);
+  }
+
+  // ---------- rendering ----------
+  var main = document.getElementById("main");
+  var pageTitle = document.getElementById("pageTitle");
+  var pageSubtitle = document.getElementById("pageSubtitle");
+
+  function setTab(tab) {
+    state.tab = tab;
+    document.querySelectorAll("nav.tabbar button").forEach(function (b) {
+      b.classList.toggle("active", b.dataset.tab === tab);
+    });
+    stopCameraIfNeeded();
+    if (tab === "range") {
+      pageTitle.textContent = "Range";
+      pageSubtitle.textContent = "Phase 1 \u00b7 recording & log";
+      renderRange();
+    } else if (tab === "log") {
+      pageTitle.textContent = "Log";
+      pageSubtitle.textContent = loadShots().length + " shot" + (loadShots().length === 1 ? "" : "s") + " recorded";
+      renderLog();
+    } else {
+      pageTitle.textContent = "Settings";
+      pageSubtitle.textContent = "Data & preferences";
+      renderSettings();
+    }
+  }
+
+  document.querySelectorAll("nav.tabbar button").forEach(function (b) {
+    b.addEventListener("click", function () { setTab(b.dataset.tab); });
+  });
+
+  // ---------- Range tab ----------
+  function renderRange() {
+    main.innerHTML =
+      '<div class="club-row" id="clubRow"></div>' +
+      '<div class="camera-wrap" id="cameraWrap">' +
+        '<div class="camera-placeholder" id="cameraPlaceholder">' +
+          'Camera access is needed to record your swing and ball flight.<br>' +
+          '<button class="btn btn-primary" id="enableCamBtn" style="margin-top:14px;">Turn on camera</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="record-controls"><button class="shutter" id="shutterBtn" aria-label="Record"></button></div>' +
+      '<div class="hint" id="recordHint">Tap to start recording, tap again to stop</div>';
+
+    var clubRow = document.getElementById("clubRow");
+    CLUBS.forEach(function (c) {
+      var chip = document.createElement("button");
+      chip.className = "chip" + (c === state.selectedClub ? " active" : "");
+      chip.textContent = c;
+      chip.addEventListener("click", function () {
+        state.selectedClub = c;
+        renderRange();
+      });
+      clubRow.appendChild(chip);
+    });
+
+    document.getElementById("enableCamBtn").addEventListener("click", startCamera);
+    document.getElementById("shutterBtn").addEventListener("click", toggleRecording);
+  }
+
+  function startCamera() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      showToast("This browser can't access the camera");
+      return;
+    }
+    navigator.mediaDevices.getUserMedia({
+      video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
+      audio: false
+    }).then(function (stream) {
+      state.stream = stream;
+      var wrap = document.getElementById("cameraWrap");
+      wrap.innerHTML = '<video id="liveVideo" autoplay playsinline muted></video>';
+      var v = document.getElementById("liveVideo");
+      v.srcObject = stream;
+    }).catch(function (err) {
+      showToast("Camera permission denied");
+    });
+  }
+
+  function stopCameraIfNeeded() {
+    if (state.stream && state.tab !== "range") {
+      state.stream.getTracks().forEach(function (t) { t.stop(); });
+      state.stream = null;
+    }
+  }
+
+  function toggleRecording() {
+    if (!state.stream) {
+      showToast("Turn on the camera first");
+      return;
+    }
+    if (!state.recording) {
+      startRecording();
+    } else {
+      stopRecording();
+    }
+  }
+
+  function startRecording() {
+    state.chunks = [];
+    var mimeType = "";
+    var candidates = ["video/mp4", "video/webm;codecs=vp9", "video/webm"];
+    for (var i = 0; i < candidates.length; i++) {
+      if (window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(candidates[i])) {
+        mimeType = candidates[i];
+        break;
+      }
+    }
+    try {
+      state.recorder = mimeType
+        ? new MediaRecorder(state.stream, { mimeType: mimeType })
+        : new MediaRecorder(state.stream);
+    } catch (e) {
+      showToast("Recording isn't supported in this browser");
+      return;
+    }
+    state.recorder.ondataavailable = function (e) {
+      if (e.data && e.data.size > 0) state.chunks.push(e.data);
+    };
+    state.recorder.onstop = function () {
+      var blob = new Blob(state.chunks, { type: mimeType || "video/webm" });
+      state.lastClipUrl = URL.createObjectURL(blob);
+      openTagSheet();
+    };
+    state.recorder.start();
+    state.recording = true;
+    document.getElementById("shutterBtn").classList.add("recording");
+    document.getElementById("recordHint").textContent = "Recording\u2026 tap to stop";
+    var badge = document.createElement("div");
+    badge.className = "rec-badge";
+    badge.id = "recBadge";
+    badge.innerHTML = '<span class="rec-dot"></span> REC';
+    document.getElementById("cameraWrap").appendChild(badge);
+  }
+
+  function stopRecording() {
+    if (state.recorder && state.recorder.state !== "inactive") {
+      state.recorder.stop();
+    }
+    state.recording = false;
+    document.getElementById("shutterBtn").classList.remove("recording");
+    document.getElementById("recordHint").textContent = "Tap to start recording, tap again to stop";
+    var badge = document.getElementById("recBadge");
+    if (badge) badge.remove();
+  }
+
+  // ---------- tag & save sheet ----------
+  var sheet = document.getElementById("sheet");
+  var backdrop = document.getElementById("sheetBackdrop");
+
+  function openTagSheet() {
+    state.selectedShape = "straight";
+    sheet.innerHTML =
+      '<h2>Tag this shot</h2>' +
+      '<p style="margin:0 0 4px;color:var(--text-muted);font-size:0.85rem;">' + state.selectedClub + '</p>' +
+      (state.lastClipUrl ? '<video src="' + state.lastClipUrl + '" controls playsinline></video>' : '') +
+      '<div class="field-label">Shot shape</div>' +
+      '<div class="shape-grid" id="shapeGrid"></div>' +
+      '<div class="field-label">Carry distance <span class="est-tag">your estimate \u2014 not measured</span></div>' +
+      '<div class="estimate-row">' +
+        '<input type="number" inputmode="numeric" id="carryInput" placeholder="e.g. 150">' +
+        '<span>' + state.unit + '</span>' +
+      '</div>' +
+      '<div class="sheet-actions">' +
+        '<button class="btn btn-ghost" id="discardBtn">Discard</button>' +
+        '<button class="btn btn-primary" id="saveShotBtn">Save shot</button>' +
+      '</div>';
+
+    var grid = document.getElementById("shapeGrid");
+    SHAPES.forEach(function (s) {
+      var chip = document.createElement("button");
+      chip.className = "chip" + (s.id === state.selectedShape ? " active" : "");
+      chip.textContent = s.label;
+      chip.addEventListener("click", function () {
+        state.selectedShape = s.id;
+        grid.querySelectorAll(".chip").forEach(function (c) { c.classList.remove("active"); });
+        chip.classList.add("active");
+      });
+      grid.appendChild(chip);
+    });
+
+    document.getElementById("discardBtn").addEventListener("click", closeSheet);
+    document.getElementById("saveShotBtn").addEventListener("click", saveCurrentShot);
+
+    backdrop.classList.add("open");
+    requestAnimationFrame(function () { sheet.classList.add("open"); });
+  }
+
+  function closeSheet() {
+    sheet.classList.remove("open");
+    backdrop.classList.remove("open");
+    if (state.lastClipUrl) {
+      URL.revokeObjectURL(state.lastClipUrl);
+      state.lastClipUrl = null;
+    }
+  }
+  backdrop.addEventListener("click", closeSheet);
+
+  function saveCurrentShot() {
+    var carryVal = parseFloat(document.getElementById("carryInput").value);
+    var shots = loadShots();
+    shots.unshift({
+      id: Date.now(),
+      club: state.selectedClub,
+      shape: state.selectedShape,
+      carryEstimate: isNaN(carryVal) ? null : carryVal,
+      unit: state.unit,
+      ts: new Date().toISOString()
+    });
+    saveShots(shots);
+    closeSheet();
+    showToast("Shot saved");
+  }
+
+  // ---------- Log tab ----------
+  var SHAPE_LABEL = {};
+  SHAPES.forEach(function (s) { SHAPE_LABEL[s.id] = s.label; });
+
+  function renderLog() {
+    var shots = loadShots();
+    if (shots.length === 0) {
+      main.innerHTML = '<div class="empty-state"><span class="big">\u26f3</span>No shots yet \u2014 head to Range and record one.</div>';
+      return;
+    }
+    var html = "";
+    shots.forEach(function (s) {
+      var d = new Date(s.ts);
+      var time = d.toLocaleDateString([], { month: "short", day: "numeric" }) + " \u00b7 " +
+                 d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+      html +=
+        '<div class="shot-card" data-id="' + s.id + '">' +
+          '<div class="flag">\u26f3</div>' +
+          '<div class="meta">' +
+            '<div class="club-name">' + s.club + ' \u00b7 ' + (SHAPE_LABEL[s.shape] || s.shape) + '</div>' +
+            '<div class="sub">' + time + '</div>' +
+          '</div>' +
+          '<div class="carry">' +
+            (s.carryEstimate != null ? s.carryEstimate + " " + s.unit : "\u2014") +
+            '<span class="tag">' + (s.carryEstimate != null ? "estimated" : "no estimate") + '</span>' +
+          '</div>' +
+          '<button class="del" data-id="' + s.id + '" aria-label="Delete shot">\u00d7</button>' +
+        '</div>';
+    });
+    main.innerHTML = html;
+    main.querySelectorAll(".del").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var id = Number(btn.dataset.id);
+        var remaining = loadShots().filter(function (s) { return s.id !== id; });
+        saveShots(remaining);
+        renderLog();
+        pageSubtitle.textContent = remaining.length + " shot" + (remaining.length === 1 ? "" : "s") + " recorded";
+      });
+    });
+  }
+
+  // ---------- Settings tab ----------
+  function renderSettings() {
+    main.innerHTML =
+      '<section class="card">' +
+        '<h3>Distance units</h3>' +
+        '<div class="row-between" style="margin-top:10px;">' +
+          '<p>Used for the carry estimate you enter after each shot.</p>' +
+          '<div class="seg" id="unitSeg">' +
+            '<button data-u="yds" class="' + (state.unit === "yds" ? "active" : "") + '">yds</button>' +
+            '<button data-u="m" class="' + (state.unit === "m" ? "active" : "") + '">m</button>' +
+          '</div>' +
+        '</div>' +
+      '</section>' +
+      '<section class="card">' +
+        '<h3>About this build</h3>' +
+        '<p>This is Phase 1: recording, club tagging, and your log. Carry, direction, and shape are your own estimates for now \u2014 automatic camera-based detection is Phase 2. Nothing here is measured yet, and it never will show a number as measured until it actually is.</p>' +
+      '</section>' +
+      '<section class="card">' +
+        '<h3>Clear all data</h3>' +
+        '<p style="margin-bottom:12px;">Removes every recorded shot from this device. This can\u2019t be undone.</p>' +
+        '<button class="btn btn-danger" id="clearBtn" style="width:100%;">Clear all shots</button>' +
+      '</section>';
+
+    document.querySelectorAll("#unitSeg button").forEach(function (b) {
+      b.addEventListener("click", function () {
+        state.unit = b.dataset.u;
+        saveUnit(state.unit);
+        renderSettings();
+      });
+    });
+    document.getElementById("clearBtn").addEventListener("click", function () {
+      if (confirm("Delete all recorded shots? This can't be undone.")) {
+        saveShots([]);
+        showToast("All shots cleared");
+        renderSettings();
+      }
+    });
+  }
+
+  // ---------- init ----------
+  setTab("range");
+})();
+</script>
+</body>
+</html>
